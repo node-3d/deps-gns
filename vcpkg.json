@@ -1,6 +1,7 @@
 {
 	"name": "node3d-deps-gns",
 	"version-string": "0.1.0",
+	"builtin-baseline": "118bba14b94bc040c098c0c15e63c142148c05ca",
 	"dependencies": [
 		"openssl",
 		"protobuf"
