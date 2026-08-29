@@ -1,56 +1,51 @@
 name: Build binaries
 
 on:
-	push:
-		branches: [master]
-	pull_request:
-		branches: [master]
-	workflow_dispatch:
-
-permissions:
-	contents: write
-	id-token: write
-	attestations: write
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
 
 jobs:
-	build:
-		strategy:
-			fail-fast: false
-			matrix:
-				include:
-					- target: windows-x64
-						os: windows-2022
-						node_arch: x64
-					- target: windows-arm64
-						os: windows-11-vs2026-arm
-						node_arch: arm64
-					- target: linux-x64
-						os: ubuntu-24.04
-						node_arch: x64
-					- target: linux-arm64
-						os: ubuntu-24.04-arm
-						node_arch: arm64
-					- target: darwin-x64
-						os: macos-26
-						node_arch: x64
-						cmake_osx_architectures: x86_64
-					- target: darwin-arm64
-						os: macos-26
-						node_arch: arm64
-		runs-on: ${{ matrix.os }}
-		env:
-			GNS_CMAKE_OSX_ARCHITECTURES: ${{ matrix.cmake_osx_architectures }}
-		steps:
-			- uses: actions/checkout@v7
-			- uses: actions/setup-node@v6
-				with:
-					node-version: 24.13.0
-					architecture: ${{ matrix.node_arch }}
-					cache: npm
-			- uses: lukka/run-vcpkg@v11
-				with:
-					vcpkgJsonGlob: vcpkg.json
-			- run: npm ci --ignore-scripts
-			- run: npm run build:source
-			- run: npm run test:ci
-			- run: npm pack --dry-run
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows-x64
+            os: windows-2022
+            node_arch: x64
+          - target: windows-arm64
+            os: windows-11-vs2026-arm
+            node_arch: arm64
+          - target: linux-x64
+            os: ubuntu-24.04
+            node_arch: x64
+          - target: linux-arm64
+            os: ubuntu-24.04-arm
+            node_arch: arm64
+          - target: darwin-x64
+            os: macos-26
+            node_arch: x64
+            cmake_osx_architectures: x86_64
+          - target: darwin-arm64
+            os: macos-26
+            node_arch: arm64
+    runs-on: ${{ matrix.os }}
+    env:
+      GNS_CMAKE_OSX_ARCHITECTURES: ${{ matrix.cmake_osx_architectures }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.13.0
+          architecture: ${{ matrix.node_arch }}
+          cache: npm
+      - uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: vcpkg.json
+      - run: npm ci --ignore-scripts
+      - run: npm run build:source
+      - run: npm run test:ci
+      - run: npm pack --dry-run

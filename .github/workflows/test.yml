@@ -1,19 +1,19 @@
 name: Test
 
 on:
-	push:
-		branches: [master]
-	pull_request:
-		branches: [master]
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
-	test:
-		runs-on: ubuntu-24.04
-		steps:
-			- uses: actions/checkout@v7
-			- uses: actions/setup-node@v6
-				with:
-					node-version: 24.13.0
-					cache: npm
-			- run: npm ci --ignore-scripts
-			- run: npm run test:ci
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.13.0
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:ci
