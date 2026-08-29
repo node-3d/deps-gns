@@ -16,25 +16,35 @@ jobs:
           - target: windows-x64
             os: windows-2022
             node_arch: x64
+            vcpkg_triplet: x64-windows
           - target: windows-arm64
             os: windows-11-vs2026-arm
             node_arch: arm64
+            vcpkg_triplet: arm64-windows
+            windows_arm64: '1'
           - target: linux-x64
             os: ubuntu-24.04
             node_arch: x64
+            vcpkg_triplet: x64-linux
           - target: linux-arm64
             os: ubuntu-24.04-arm
             node_arch: arm64
+            vcpkg_triplet: arm64-linux
           - target: darwin-x64
             os: macos-26
             node_arch: x64
             cmake_osx_architectures: x86_64
+            vcpkg_triplet: x64-osx
           - target: darwin-arm64
             os: macos-26
             node_arch: arm64
+            vcpkg_triplet: arm64-osx
     runs-on: ${{ matrix.os }}
     env:
       GNS_CMAKE_OSX_ARCHITECTURES: ${{ matrix.cmake_osx_architectures }}
+      GNS_WINDOWS_ARM64: ${{ matrix.windows_arm64 }}
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.vcpkg_triplet }}
+      VCPKG_TARGET_TRIPLET: ${{ matrix.vcpkg_triplet }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6

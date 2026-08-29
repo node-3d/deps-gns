@@ -33,6 +33,11 @@ Release archives are built from the upstream v1.6.0 tag by this repository's
 GitHub Actions workflows. The build uses OpenSSL and Protobuf through vcpkg and
 publishes only the GameNetworkingSockets headers and static library.
 
+The pinned upstream release does not recognize MSVC ARM64's `_M_ARM64` macro in
+its endianness detection. The Windows ARM64 build applies a guarded source patch
+that recognizes `_M_ARM64` and `_M_ARM64EC` as little-endian; it fails loudly if
+the pinned upstream source changes.
+
 The P2P/ICE build option is deliberately off. It does not affect direct UDP
 client/server networking. Enabling P2P is a later consumer contract because it
 requires a signalling provider and operational STUN/TURN decisions.

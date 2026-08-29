@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, rm } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { getBin } from '@node-3d/addon-tools';
@@ -43,6 +43,24 @@ run('git', [
 	'https://github.com/ValveSoftware/GameNetworkingSockets.git',
 	source,
 ]);
+
+if (process.env.GNS_WINDOWS_ARM64 === '1') {
+	const header = path.join(source, 'src', 'public', 'minbase', 'minbase_identify.h');
+	const original = await readFile(header, 'utf8');
+	const marker = '|| defined(__aarch64__) || defined(_XBOX)';
+	if (!original.includes(marker)) {
+		throw new Error(
+			'GameNetworkingSockets endianness patch did not match the pinned upstream source.',
+		);
+	}
+	await writeFile(
+		header,
+		original.replace(
+			marker,
+			'|| defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(_XBOX)',
+		),
+	);
+}
 
 const cmakeArgs = [
 	'-S',
