@@ -18,25 +18,38 @@ const run = (command, args) => {
 };
 
 const copyLibraries = async (directory) => {
+	const copied = { import: 0, runtime: 0 };
 	for (const entry of await readdir(directory, { withFileTypes: true })) {
 		const entryPath = path.join(directory, entry.name);
 		if (entry.isDirectory()) {
-			await copyLibraries(entryPath);
-		} else if (/^(?:lib)?GameNetworkingSockets\.(?:a|lib)$/u.test(entry.name)) {
+			const nested = await copyLibraries(entryPath);
+			copied.import += nested.import;
+			copied.runtime += nested.runtime;
+		} else if (/^GameNetworkingSockets\.lib$/u.test(entry.name)) {
 			await cp(entryPath, path.join(bin, entry.name));
+			copied.import += 1;
+		} else if (
+			/^(?:lib)?GameNetworkingSockets\.(?:dll|dylib|so(?:\.\d+)*)$/u.test(entry.name)
+		) {
+			await cp(entryPath, path.join(bin, entry.name));
+			copied.runtime += 1;
 		}
 	}
+	return copied;
 };
 
-const copyVcpkgLibraries = async () => {
+const copyVcpkgRuntimeLibraries = async () => {
 	const cache = await readFile(path.join(build, 'CMakeCache.txt'), 'utf8');
 	const installedDirectory = cache.match(/^VCPKG_INSTALLED_DIR:PATH=(.+)$/mu)?.[1];
-	if (!installedDirectory) {
-		throw new Error('CMake did not report the vcpkg installed directory.');
+	const targetTriplet =
+		process.env.VCPKG_TARGET_TRIPLET ?? cache.match(/^VCPKG_TARGET_TRIPLET:[^=]+=(.+)$/mu)?.[1];
+	if (!installedDirectory || !targetTriplet) {
+		throw new Error('CMake did not report the vcpkg installed directory and target triplet.');
 	}
 
+	let copied = 0;
 	for (const directory of ['lib', 'bin']) {
-		const sourceDirectory = path.join(installedDirectory, directory);
+		const sourceDirectory = path.join(installedDirectory, targetTriplet, directory);
 		const entries = await readdir(sourceDirectory, { withFileTypes: true }).catch((error) => {
 			if (error.code === 'ENOENT') {
 				return [];
@@ -45,11 +58,13 @@ const copyVcpkgLibraries = async () => {
 		});
 
 		for (const entry of entries) {
-			if (entry.isFile() && /\.(?:a|dylib|dll|lib|so(?:\.\d+)*)$/u.test(entry.name)) {
+			if (entry.isFile() && /\.(?:dylib|dll|so(?:\.\d+)*)$/u.test(entry.name)) {
 				await cp(path.join(sourceDirectory, entry.name), path.join(bin, entry.name));
+				copied += 1;
 			}
 		}
 	}
+	return copied;
 };
 
 await rm(source, { recursive: true, force: true });
@@ -90,8 +105,8 @@ const cmakeArgs = [
 	source,
 	'-B',
 	build,
-	'-DBUILD_SHARED_LIB=OFF',
-	'-DBUILD_STATIC_LIB=ON',
+	'-DBUILD_SHARED_LIB=ON',
+	'-DBUILD_STATIC_LIB=OFF',
 	'-DBUILD_EXAMPLES=OFF',
 	'-DBUILD_TESTS=OFF',
 	'-DENABLE_ICE=ON',
@@ -106,8 +121,21 @@ if (vcpkgRoot) {
 if (process.env.GNS_CMAKE_OSX_ARCHITECTURES) {
 	cmakeArgs.push(`-DCMAKE_OSX_ARCHITECTURES=${process.env.GNS_CMAKE_OSX_ARCHITECTURES}`);
 }
+if (process.platform === 'darwin') {
+	cmakeArgs.push('-DCMAKE_BUILD_RPATH=@loader_path');
+} else if (process.platform === 'linux') {
+	cmakeArgs.push('-DCMAKE_BUILD_RPATH=$ORIGIN');
+}
 
 run('cmake', cmakeArgs);
 run('cmake', ['--build', build, '--config', 'Release', '--parallel']);
-await copyLibraries(build);
-await copyVcpkgLibraries();
+const copiedGnsLibraries = await copyLibraries(build);
+await copyVcpkgRuntimeLibraries();
+if (
+	copiedGnsLibraries.runtime === 0 ||
+	(process.platform === 'win32' && copiedGnsLibraries.import === 0)
+) {
+	throw new Error(
+		`Expected shared GNS runtime and import libraries in ${bin}; copied ${copiedGnsLibraries.runtime} runtime and ${copiedGnsLibraries.import} import libraries.`,
+	);
+}

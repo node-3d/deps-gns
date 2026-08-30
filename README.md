@@ -14,34 +14,36 @@ This dependency package distributes **GameNetworkingSockets 1.6.0**
 binaries and headers through **npm** for **Node.js** addons.
 
 - Platforms: Windows x64/ARM64, Linux x64/ARM64, macOS x64/ARM64.
-- Library: GameNetworkingSockets static transport library.
+- Library: GameNetworkingSockets shared transport library.
 
 ## Source And Build Notes
 
 This package builds from the upstream
 [GameNetworkingSockets](https://github.com/ValveSoftware/GameNetworkingSockets)
-v1.6.0 source using CMake and vcpkg. The build provides static
-`GameNetworkingSockets.lib` on Windows and `libGameNetworkingSockets.a` on
-Linux/macOS, with GNS's P2P/ICE API enabled and Google WebRTC disabled.
+v1.6.0 source using CMake and vcpkg. The build provides the upstream shared
+target: `GameNetworkingSockets.dll` and its `GameNetworkingSockets.lib` import
+library on Windows, `libGameNetworkingSockets.so` on Linux, and
+`libGameNetworkingSockets.dylib` on macOS. GNS's `_s` target is its static
+library variant and is not shipped.
 
 This exposes the custom-signalling and P2P/ICE configuration APIs without
 shipping a WebRTC ICE backend. Direct client/server UDP networking is unchanged.
 A consumer that wants NAT traversal must provide its own compatible ICE transport
 or use a future package build that explicitly enables Google WebRTC.
 
-Each platform `bin-*` directory contains GameNetworkingSockets and its complete
-vcpkg OpenSSL/Protobuf library closure. Link the GNS library and every static
-library distributed alongside it; on Windows, import the dependency package at
-runtime so its `bin-*` directory is added to `PATH` for any bundled dependency
-DLLs. These libraries are required for every GNS connection, including ordinary
-client/server UDP. They are not an ICE-only dependency. Google WebRTC libraries
-are not included because `USE_STEAMWEBRTC=OFF`.
+Each platform `bin-*` directory contains the GNS shared library and any OpenSSL
+or Protobuf shared-library dependencies it requires. Consumers link only GNS:
+`GameNetworkingSockets.lib` on Windows or the GNS `.so`/`.dylib` on Linux/macOS.
+The sibling dependency libraries are runtime implementation details; do not link
+them from an addon. Google WebRTC libraries are not included because
+`USE_STEAMWEBRTC=OFF`.
 
 In `binding.gyp`, resolve `include` and `bin` exactly as other dependency
 packages do, add `include` to `include_dirs`, add `bin` to `library_dirs`, and
-link the library files shipped in that platform's `bin-*` directory. On Windows,
-also link GNS's system dependencies: `ws2_32.lib`, `crypt32.lib`, `winmm.lib`,
-and `Iphlpapi.lib`.
+link only the GNS import/shared library. Follow the same Linux/macOS rpath
+pattern used by `@node-3d/image` and `@node-3d/glfw` so the addon can find the
+dependency package's `bin-*` directory. On Windows, import this package before
+loading the addon so `@node-3d/addon-tools` adds that directory to `PATH`.
 
 Windows ARM64 requires a narrow, guarded source patch because the pinned upstream
 release does not recognize MSVC's `_M_ARM64` / `_M_ARM64EC` macros in its
