@@ -1,3 +1,4 @@
+// oxlint-disable eslint/no-await-in-loop, node/no-process-env, node/no-sync
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -7,7 +8,6 @@ const upstreamVersion = 'v1.6.0';
 const root = path.resolve(import.meta.dirname, '..');
 const source = path.join(root, 'source');
 const build = path.join(root, 'build');
-const include = path.join(root, 'include');
 const bin = path.resolve(getBin());
 
 const run = (command, args) => {
@@ -28,9 +28,32 @@ const copyLibraries = async (directory) => {
 	}
 };
 
+const copyVcpkgLibraries = async () => {
+	const cache = await readFile(path.join(build, 'CMakeCache.txt'), 'utf8');
+	const installedDirectory = cache.match(/^VCPKG_INSTALLED_DIR:PATH=(.+)$/mu)?.[1];
+	if (!installedDirectory) {
+		throw new Error('CMake did not report the vcpkg installed directory.');
+	}
+
+	for (const directory of ['lib', 'bin']) {
+		const sourceDirectory = path.join(installedDirectory, directory);
+		const entries = await readdir(sourceDirectory, { withFileTypes: true }).catch((error) => {
+			if (error.code === 'ENOENT') {
+				return [];
+			}
+			throw error;
+		});
+
+		for (const entry of entries) {
+			if (entry.isFile() && /\.(?:a|dylib|dll|lib|so(?:\.\d+)*)$/u.test(entry.name)) {
+				await cp(path.join(sourceDirectory, entry.name), path.join(bin, entry.name));
+			}
+		}
+	}
+};
+
 await rm(source, { recursive: true, force: true });
 await rm(build, { recursive: true, force: true });
-await rm(include, { recursive: true, force: true });
 await rm(bin, { recursive: true, force: true });
 await mkdir(bin, { recursive: true });
 
@@ -86,5 +109,5 @@ if (process.env.GNS_CMAKE_OSX_ARCHITECTURES) {
 
 run('cmake', cmakeArgs);
 run('cmake', ['--build', build, '--config', 'Release', '--parallel']);
-await cp(path.join(source, 'include'), include, { recursive: true });
 await copyLibraries(build);
+await copyVcpkgLibraries();

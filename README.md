@@ -29,6 +29,20 @@ shipping a WebRTC ICE backend. Direct client/server UDP networking is unchanged.
 A consumer that wants NAT traversal must provide its own compatible ICE transport
 or use a future package build that explicitly enables Google WebRTC.
 
+Each platform `bin-*` directory contains GameNetworkingSockets and its complete
+vcpkg OpenSSL/Protobuf library closure. Link the GNS library and every static
+library distributed alongside it; on Windows, import the dependency package at
+runtime so its `bin-*` directory is added to `PATH` for any bundled dependency
+DLLs. These libraries are required for every GNS connection, including ordinary
+client/server UDP. They are not an ICE-only dependency. Google WebRTC libraries
+are not included because `USE_STEAMWEBRTC=OFF`.
+
+In `binding.gyp`, resolve `include` and `bin` exactly as other dependency
+packages do, add `include` to `include_dirs`, add `bin` to `library_dirs`, and
+link the library files shipped in that platform's `bin-*` directory. On Windows,
+also link GNS's system dependencies: `ws2_32.lib`, `crypt32.lib`, `winmm.lib`,
+and `Iphlpapi.lib`.
+
 Windows ARM64 requires a narrow, guarded source patch because the pinned upstream
 release does not recognize MSVC's `_M_ARM64` / `_M_ARM64EC` macros in its
 endianness detection. The build fails if that upstream source location changes,
@@ -46,11 +60,15 @@ rather than silently applying a patch to a different release.
 Refer to [GameNetworkingSockets](https://github.com/ValveSoftware/GameNetworkingSockets)
 and its public headers for the native API.
 
-## Legal Notice
+## Legal notice
 
 This software uses [GameNetworkingSockets](https://github.com/ValveSoftware/GameNetworkingSockets),
 which is legally used under the BSD 3-Clause license. A copy is included in the
 [GAMENETWORKINGSOCKETS_BSD](GAMENETWORKINGSOCKETS_BSD) file.
+
+The bundled OpenSSL and Protobuf dependency libraries are covered by the
+[OPENSSL_LICENSE](OPENSSL_LICENSE) and [PROTOBUF_LICENSE](PROTOBUF_LICENSE)
+files, respectively.
 
 The rest of this package is MIT licensed.
 

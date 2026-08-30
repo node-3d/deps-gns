@@ -18,9 +18,9 @@
 		"dylib",
 		"so",
 		"c++",
-		"native",
 		"addon",
 		"bindings",
+		"native",
 		"gyp"
 	],
 	"files": [
@@ -29,6 +29,8 @@
 		"index.d.ts",
 		"install.js",
 		"GAMENETWORKINGSOCKETS_BSD",
+		"OPENSSL_LICENSE",
+		"PROTOBUF_LICENSE",
 		"LICENSE",
 		"package.json"
 	],
@@ -36,6 +38,7 @@
 		"postinstall": "node install.js",
 		"test": "npm run test:watch",
 		"test:watch": "node --test --watch \"test/**/*.test.js\"",
+		"test-ci": "npm run test:ci",
 		"test:ci": "node --test \"test/**/*.test.js\"",
 		"format:ts": "oxfmt -c ./oxfmt.config.ts --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",
 		"format:ts:ci": "oxfmt -c ./oxfmt.config.ts --check --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",

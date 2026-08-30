@@ -1,4 +1,1 @@
-export default {
-	useTabs: true,
-	singleQuote: true,
-};
+export { default } from '@node-3d/addon-tools/oxfmt';
