@@ -1,50 +1,71 @@
 # GameNetworkingSockets binaries and headers
 
-This is part of the [Node3D](https://github.com/node-3d) project.
+This is a part of [Node3D](https://github.com/node-3d) project.
+
+[![NPM](https://badge.fury.io/js/@node-3d%2Fdeps-gns.svg)](https://badge.fury.io/js/@node-3d/deps-gns)
+[![Lint](https://github.com/node-3d/deps-gns/actions/workflows/lint.yml/badge.svg)](https://github.com/node-3d/deps-gns/actions/workflows/lint.yml)
+[![Test](https://github.com/node-3d/deps-gns/actions/workflows/test.yml/badge.svg)](https://github.com/node-3d/deps-gns/actions/workflows/test.yml)
 
 ```bash
 npm install @node-3d/deps-gns
 ```
 
-`@node-3d/deps-gns` distributes the headers and static library needed to build
-Node.js native addons against [GameNetworkingSockets](https://github.com/ValveSoftware/GameNetworkingSockets).
-It is a build dependency, not a JavaScript networking API.
+This dependency package distributes **GameNetworkingSockets 1.6.0**
+binaries and headers through **npm** for **Node.js** addons.
 
 - Platforms: Windows x64/ARM64, Linux x64/ARM64, macOS x64/ARM64.
-- Upstream: GameNetworkingSockets **v1.6.0**.
-- Linking: static (`GameNetworkingSockets.lib` on Windows and
-  `libGameNetworkingSockets.a` on Linux/macOS).
-- P2P/ICE: disabled. The package supplies direct client/server UDP transport;
-  standalone P2P additionally requires signalling, STUN, and relay policy.
+- Library: GameNetworkingSockets static transport library.
 
-## Interface
+## Source And Build Notes
 
-```js
-import depsGns, { bin, include } from '@node-3d/deps-gns';
+This package builds from the upstream
+[GameNetworkingSockets](https://github.com/ValveSoftware/GameNetworkingSockets)
+v1.6.0 source using CMake and vcpkg. The build provides static
+`GameNetworkingSockets.lib` on Windows and `libGameNetworkingSockets.a` on
+Linux/macOS, with GNS's P2P/ICE API enabled and Google WebRTC disabled.
+
+This exposes the custom-signalling and P2P/ICE configuration APIs without
+shipping a WebRTC ICE backend. Direct client/server UDP networking is unchanged.
+A consumer that wants NAT traversal must provide its own compatible ICE transport
+or use a future package build that explicitly enables Google WebRTC.
+
+Windows ARM64 requires a narrow, guarded source patch because the pinned upstream
+release does not recognize MSVC's `_M_ARM64` / `_M_ARM64EC` macros in its
+endianness detection. The build fails if that upstream source location changes,
+rather than silently applying a patch to a different release.
+
+### JS Interface
+
+`index.js` exports the platform-specific `bin` and `include` paths through
+`@node-3d/addon-tools`.
+
+```cpp
+#include <steam/steamnetworkingsockets.h>
 ```
 
-`bin` and `include` are the platform-specific binary and header directories.
-The default export contains both paths. Use them from a consumer's `binding.gyp`
-through `@node-3d/addon-tools` path helpers.
+Refer to [GameNetworkingSockets](https://github.com/ValveSoftware/GameNetworkingSockets)
+and its public headers for the native API.
 
-## Binary origin
+## Legal Notice
 
-Release archives are built from the upstream v1.6.0 tag by this repository's
-GitHub Actions workflows. The build uses OpenSSL and Protobuf through vcpkg and
-publishes only the GameNetworkingSockets headers and static library.
+This software uses [GameNetworkingSockets](https://github.com/ValveSoftware/GameNetworkingSockets),
+which is legally used under the BSD 3-Clause license. A copy is included in the
+[GAMENETWORKINGSOCKETS_BSD](GAMENETWORKINGSOCKETS_BSD) file.
 
-The pinned upstream release does not recognize MSVC ARM64's `_M_ARM64` macro in
-its endianness detection. The Windows ARM64 build applies a guarded source patch
-that recognizes `_M_ARM64` and `_M_ARM64EC` as little-endian; it fails loudly if
-the pinned upstream source changes.
+The rest of this package is MIT licensed.
 
-The P2P/ICE build option is deliberately off. It does not affect direct UDP
-client/server networking. Enabling P2P is a later consumer contract because it
-requires a signalling provider and operational STUN/TURN decisions.
+Windows, Linux, and macOS binaries are built with
+[GitHub Actions](https://github.com/node-3d/deps-gns/actions).
 
-## Legal notice
+## Binary Origin
 
-GameNetworkingSockets is copyright Valve Corporation and is distributed under
-the BSD 3-Clause license; a copy is included in
-[GAMENETWORKINGSOCKETS_BSD](GAMENETWORKINGSOCKETS_BSD). The Node3D packaging
-files are MIT-licensed under [LICENSE](LICENSE).
+Release archives are built by this repository's public GitHub Actions workflows.
+
+Attestations: https://github.com/node-3d/deps-gns/attestations
+
+To verify a downloaded archive:
+
+```bash
+gh release download <tag> -R node-3d/deps-gns -p <platform>.gz
+gh attestation verify <platform>.gz -R node-3d/deps-gns
+```

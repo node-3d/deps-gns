@@ -1,0 +1,72 @@
+{
+	"js/ts.preferences.importModuleSpecifier": "non-relative",
+	"explorer.copyRelativePathSeparator": "/",
+	"files.watcherExclude": {
+		"**/node_modules/**": true,
+		"**/build/**": true,
+		"**/dist/**": true,
+		"**/bin/**": true,
+		"**/bin-*": true,
+		"**/source/**": true,
+		"**/.rslib/**": true,
+		"**/.ts-cache/**": true
+	},
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/build/**": true,
+		"**/dist/**": true,
+		"**/bin/**": true,
+		"**/bin-*": true,
+		"**/source/**": true,
+		"**/.rslib/**": true,
+		"**/.ts-cache/**": true
+	},
+	"files.exclude": {
+		"**/node_modules": true,
+		"**/build/**": true,
+		"**/dist/**": true,
+		"**/bin/**": true,
+		"**/bin-*": true,
+		"**/source/**": true,
+		"**/.rslib/**": true,
+		"**/.ts-cache/**": true
+	},
+	"editor.detectIndentation": false,
+	"editor.insertSpaces": false,
+	"editor.tabSize": 4,
+	"editor.trimAutoWhitespace": true,
+	"editor.formatOnSave": true,
+	"files.eol": "\n",
+	"files.insertFinalNewline": true,
+	"files.trimTrailingWhitespace": true,
+	"[javascript]": {
+		"editor.defaultFormatter": "oxc.oxc-vscode"
+	},
+	"[javascriptreact]": {
+		"editor.defaultFormatter": "oxc.oxc-vscode"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "oxc.oxc-vscode"
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "oxc.oxc-vscode"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "oxc.oxc-vscode"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "oxc.oxc-vscode"
+	},
+	"[css]": {
+		"editor.defaultFormatter": "oxc.oxc-vscode"
+	},
+	"terminal.integrated.profiles.windows": {
+		"PowerShell": {
+			"source": "PowerShell",
+			"args": [
+				"-ExecutionPolicy",
+				"Bypass"
+			]
+		}
+	}
+}

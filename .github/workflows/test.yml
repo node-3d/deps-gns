@@ -1,14 +1,19 @@
 name: Test
+defaults:
+  run:
+    shell: bash
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
   pull_request:
-    branches: [master]
+    branches:
+      - master
 
 jobs:
-  test:
-    name: Test (${{ matrix.target }})
+  unit-tests:
+    name: Unit Tests (${{ matrix.target }})
     strategy:
       fail-fast: false
       matrix:
@@ -16,18 +21,21 @@ jobs:
           - target: windows-x64
             os: windows-2022
             node_arch: x64
+            msbuild_arch: x64
             vcpkg_triplet: x64-windows
           - target: windows-arm64
             os: windows-11-vs2026-arm
             node_arch: arm64
+            msbuild_arch: arm64
+            vs_prerelease: true
             vcpkg_triplet: arm64-windows
             windows_arm64: '1'
           - target: linux-x64
-            os: ubuntu-24.04
+            os: ubuntu-22.04
             node_arch: x64
             vcpkg_triplet: x64-linux
           - target: linux-arm64
-            os: ubuntu-24.04-arm
+            os: ubuntu-22.04-arm
             node_arch: arm64
             vcpkg_triplet: arm64-linux
           - target: darwin-x64
@@ -39,23 +47,60 @@ jobs:
             os: macos-26
             node_arch: arm64
             vcpkg_triplet: arm64-osx
+
     runs-on: ${{ matrix.os }}
+
     env:
       GNS_CMAKE_OSX_ARCHITECTURES: ${{ matrix.cmake_osx_architectures }}
       GNS_WINDOWS_ARM64: ${{ matrix.windows_arm64 }}
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.vcpkg_triplet }}
       VCPKG_TARGET_TRIPLET: ${{ matrix.vcpkg_triplet }}
+
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+
+      - name: Fetch Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
         with:
           node-version: 24.13.0
           architecture: ${{ matrix.node_arch }}
-          cache: npm
-      - uses: lukka/run-vcpkg@v11
+          cache: 'npm'
+
+      - name: Print Native Target
+        run: |
+          echo "runner=$(uname -s)-$(uname -m)"
+          node -p "'node=' + process.version + ' platform=' + process.platform + ' arch=' + process.arch"
+          npm config get arch
+
+      - name: Install Modules
+        run: npm ci --ignore-scripts
+
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '4.2.x'
+
+      - name: Add msbuild to PATH
+        if: startsWith(matrix.target, 'windows-')
+        uses: microsoft/setup-msbuild@v3
+        with:
+          msbuild-architecture: ${{ matrix.msbuild_arch }}
+          vs-prerelease: ${{ matrix.vs_prerelease || false }}
+
+      - name: Install vcpkg Dependencies
+        uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: vcpkg.json
-      - run: npm ci --ignore-scripts
-      - run: npm run build:source
-      - run: npm run test:ci
-      - run: npm pack --dry-run
+
+      - name: Build Source
+        run: npm run build:source
+
+      - name: Run Unit Tests
+        run: npm run test:ci
+
+      - name: Check Package Contents
+        run: npm pack --dry-run

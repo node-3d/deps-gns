@@ -71,7 +71,8 @@ const cmakeArgs = [
 	'-DBUILD_STATIC_LIB=ON',
 	'-DBUILD_EXAMPLES=OFF',
 	'-DBUILD_TESTS=OFF',
-	'-DENABLE_ICE=OFF',
+	'-DENABLE_ICE=ON',
+	'-DUSE_STEAMWEBRTC=OFF',
 ];
 const vcpkgRoot = process.env.VCPKG_ROOT ?? process.env.VCPKG_INSTALLATION_ROOT;
 if (vcpkgRoot) {
