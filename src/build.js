@@ -105,6 +105,7 @@ const cmakeArgs = [
 	source,
 	'-B',
 	build,
+	'-DCMAKE_BUILD_TYPE=Release',
 	'-DBUILD_SHARED_LIB=ON',
 	'-DBUILD_STATIC_LIB=OFF',
 	'-DBUILD_EXAMPLES=OFF',
