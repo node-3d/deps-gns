@@ -31,10 +31,10 @@
 		"GAMENETWORKINGSOCKETS_BSD",
 		"OPENSSL_LICENSE",
 		"PROTOBUF_LICENSE",
-		"LICENSE",
-		"package.json"
+		"LICENSE"
 	],
 	"scripts": {
+		"i": "npm install --workspaces=false",
 		"postinstall": "node install.js",
 		"test": "npm run test:watch",
 		"test:watch": "node --test --watch \"test/**/*.test.js\"",
